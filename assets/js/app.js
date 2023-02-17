@@ -30,71 +30,71 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 //Snake Hook Stuff
 let Hooks = {}
 
-    Hooks.canvas =  {
+    Hooks.move =  {
         mounted() {
 
-            let canvas = this.el.firstElementChild;
-            const snakes = JSON.parse(this.el.dataset.snakes)
-            const blockSize = JSON.parse(this.el.dataset.block) || 10
+//             let canvas = this.el.firstElementChild;
+            // const snakes = JSON.parse(this.el.dataset.snakes)
+//             const blockSize = JSON.parse(this.el.dataset.block) || 10
 
-            let ctx = canvas.getContext("2d");
-            let cameraX = snakes[0].head.x - canvas.width / 2;
-            let cameraY = snakes[0].head.y - canvas.height / 2;
+//             let ctx = canvas.getContext("2d");
+//             let cameraX = snakes[0].head.x - canvas.width / 2;
+//             let cameraY = snakes[0].head.y - canvas.height / 2;
 
-                // Translate the canvas context to the new camera position
-            ctx.translate(-cameraX, -cameraY);
-            // Wall
-            const canvasWidth = canvas.width;
-            const canvasHeight = canvas.height;
-            const widthInBlocks = canvasWidth / blockSize;
-            const heightInBlocks = canvasHeight / blockSize;
-            console.log(snakes)
+//                 // Translate the canvas context to the new camera position
+//             ctx.translate(-cameraX, -cameraY);
+//             // Wall
+//             const canvasWidth = canvas.width;
+//             const canvasHeight = canvas.height;
+//             const widthInBlocks = canvasWidth / blockSize;
+//             const heightInBlocks = canvasHeight / blockSize;
+//             console.log(snakes)
 
             this.el.addEventListener('mousemove', e => {
-             const dx = e.clientX - snakes[0].head.x;
-             const dy = e.clientY - snakes[0].head.y;
-                const angle = Math.atan2(dy,dx);
-                console.log(angle)
-                this.pushEvent("angle_change", {angle });
+             const x = e.clientX
+             const y = e.clientY
+                // const angle = Math.atan2(dy,dx);
+                // console.log(angle)
+                this.pushEvent("angle_change", {x,y });
             });
-            // canvas.addEventListener('mousemove', function(event) {
-            // // Calculate the angle between the mouse position and the snake's head position
-            // const dx = event.clientX - snakes[0].x;
-            // const dy = event.clientY - snakes[0].y;
-            //     pushEvent("angle_change",{angle:  Math.atan2(dy, dx)},() => console.log("Whoops"));
-            // });
+//             // canvas.addEventListener('mousemove', function(event) {
+//             // // Calculate the angle between the mouse position and the snake's head position
+//             // const dx = event.clientX - snakes[0].x;
+//             // const dy = event.clientY - snakes[0].y;
+//             //     pushEvent("angle_change",{angle:  Math.atan2(dy, dx)},() => console.log("Whoops"));
+//             // });
 
 
-            function drawSnake(snake) {
-                ctx.fillStyle = snake.color;
-                ctx.fillRect( snake.head.x * blockSize,snake.head.y * blockSize,blockSize,blockSize);
-            }
-            snakes.forEach(snake => drawSnake(snake) );
+//             function drawSnake(snake) {
+//                 ctx.fillStyle = snake.color;
+//                 ctx.fillRect( snake.head.x * blockSize,snake.head.y * blockSize,blockSize,blockSize);
+//             }
+//             snakes.forEach(snake => drawSnake(snake) );
 
 
-            Object.assign(this, {canvas,ctx,snakes,blockSize, drawSnake});
+//             Object.assign(this, {canvas,ctx,snakes,blockSize, drawSnake});
         },
         updated() {
-            let {canvas, ctx, blockSize} = this;
-            //ctx.clearRect(0,0,canvas.width,canvas.height)
+//             let {canvas, ctx, blockSize} = this;
+//             //ctx.clearRect(0,0,canvas.width,canvas.height)
 
 
 
-            function drawSnake(snake) {
-                ctx.fillStyle = snake.color;
-                ctx.fillRect( snake.head.x * blockSize,snake.head.y * blockSize,blockSize,blockSize);
-            }
-            let snakes = JSON.parse(this.el.dataset.snakes)
-            let cameraX = snakes[0].head.x - canvas.width / 2;
-            let cameraY = snakes[0].head.y - canvas.height / 2;
+//             function drawSnake(snake) {
+//                 ctx.fillStyle = snake.color;
+//                 ctx.fillRect( snake.head.x * blockSize,snake.head.y * blockSize,blockSize,blockSize);
+//             }
+//             let snakes = JSON.parse(this.el.dataset.snakes)
+//             let cameraX = snakes[0].head.x - canvas.width / 2;
+//             let cameraY = snakes[0].head.y - canvas.height / 2;
 
-                // Translate the canvas context to the new camera position
-            ctx.translate(-cameraX, -cameraY);
-            for (var i = 0; i < snakes.length; ++i) {
-                ctx.fillStyle = "red";
-                ctx.fillRect( snakes[i].head.x * blockSize,snakes[i].head.y * blockSize,blockSize,blockSize);
+//                 // Translate the canvas context to the new camera position
+//             ctx.translate(-cameraX, -cameraY);
+//             for (var i = 0; i < snakes.length; ++i) {
+//                 ctx.fillStyle = "red";
+//                 ctx.fillRect( snakes[i].head.x * blockSize,snakes[i].head.y * blockSize,blockSize,blockSize);
 
-            }
+//             }
     }
 }
 
