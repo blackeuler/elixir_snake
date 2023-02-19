@@ -5,13 +5,15 @@ defmodule Snake.Game do
     Model.new()
     |> Model.add_food()
     |> Model.add_snake(Snake.new({:random.uniform(330), 50}, 9))
+    |> Model.add_snake(Snake.new({:random.uniform(330), 50}, 4))
     |> Model.add_snake(Snake.new({:random.uniform(330), 50}, 3))
-    |> Model.add_snake(Model.snake_of_length(30))
+    |> Model.add_snake(Snake.new({:random.uniform(330), 50}, 5))
+    |> Model.add_snake(Model.snake_of_length(7))
     |> Model.generate_food(200)
   end
 
-  def change_snake_angle(%Model{} = game, snake_id, angle) do
-    Model.update_snake_angle(game, snake_id, angle)
+  def change_snake_angle(%Model{} = game, angle) do
+    Model.update_snake_angle(game, angle)
   end
 
   def all_snakes(%Model{snakes: snakes}) do
@@ -26,12 +28,18 @@ defmodule Snake.Game do
     cp
   end
 
-  def update(%Model{} = game) do
-    Model.update(game)
+  def update(%Model{} = game, delta_t) do
+    Model.update(game, delta_t)
   end
 
-  def to_svg_box(%Model{} = game ) do
-    Model.to_svg_box(game )
+  def to_svg_box(%Model{} = game) do
+    Model.to_svg_box(game)
+  end
+
+  def background(%Model{width: width, height: height} = game) do
+    "
+            <rect width=#{width} height=#{height} x={@x } y={@y } fill={@fill} />
+"
   end
 
   def draw_snake(%Model{} = game, snake_id) do

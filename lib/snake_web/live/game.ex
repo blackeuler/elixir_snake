@@ -5,29 +5,26 @@ defmodule SnakeWeb.GameLive do
 
   def render(assigns) do
     ~H"""
-    Its time to play the game
-    <%= if Game.current_player(@game_model) do %>
+    <%= if @current_player do %>
     <div  data-block="4"  >
-      <svg phx-hook="move" id="game" viewBox={Game.to_svg_box(@game_model)} xmlns="http://www.w3.org/2000/svg">
+      <svg  phx-hook="move" id="game" viewBox={Game.to_svg_box(@game_model)} xmlns="http://www.w3.org/2000/svg">
             <!-- Simple rectangle -->
+            <rect width={@game_model.width} height={@game_model.height} x={0 } y={0 } fill="black" />
             <%= for snake <- @game_snakes do %>
                 <.snakec snake={snake} />
             <% end %>
             <%= for food <- Game.all_food(@game_model) do %>
                 <.foodc food={food} />
             <% end %>
-
-
-
        </svg>
     </div>
+    <button phx-click="start"> Start Playing </button>
     <% end %>
-    <button phx-click="update"> Update Me </button>
     """
   end
 
   def mount(_session, _params, socket) do
-    {:ok, assign_game_model(socket) |> assign_snakes}
+    {:ok, assign_game_model(socket) |> assign_snakes |> assign_current_player}
   end
 
   def assign_game_model(socket) do
@@ -38,21 +35,25 @@ defmodule SnakeWeb.GameLive do
     assign(socket, game_snakes: Game.all_snakes(game_model))
   end
 
-  def handle_event("update", _params, socket) do
+  def assign_current_player(%{assigns: %{game_model: game_model}} = socket) do
+    assign(socket, current_player: Game.current_player(game_model))
+  end
+
+  def handle_event("start", _params, socket) do
     Process.send_after(self(), :update, 10)
-    {:noreply, assign(socket, game_model: Game.update(socket.assigns.game_model))}
+    {:noreply, assign(socket, game_model: Game.update(socket.assigns.game_model, 10))}
   end
 
   def handle_event("angle_change", %{"x" => x, "y" => y}, socket) do
     {:noreply,
-     assign(socket, game_model: Game.change_snake_angle(socket.assigns.game_model, 1, {x, y}))}
+     assign(socket, game_model: Game.change_snake_angle(socket.assigns.game_model, {x, y}))}
   end
 
   def handle_info(:update, socket) do
-    Process.send_after(self(), :update, 10)
+    Process.send_after(self(), :update, 15)
 
     {:noreply,
-     assign(socket, game_model: Game.update(socket.assigns.game_model))
+     assign(socket, game_model: Game.update(socket.assigns.game_model, 15))
      |> assign_snakes}
   end
 
@@ -87,12 +88,13 @@ defmodule SnakeWeb.GameLive do
   defp snakec(assigns) do
     head = assigns[:snake].head
     body = assigns[:snake].body
+    color = assigns[:snake].color
 
     ~H"""
     <%= for segment <- Enum.reverse(body) do %>
-        <circle r={segment.r} cx={segment.x} cy={segment.y} fill="red" />
+        <circle r={segment.r} cx={segment.x} cy={segment.y} fill={color} />
     <% end %>
-      <circle r={head.r} cx={head.x} cy={head.y} fill="black" />
+      <circle r={head.r} cx={head.x} cy={head.y} fill="white" />
     """
   end
 

@@ -8,24 +8,13 @@ defmodule Snake.Game.Snake do
       id: id,
       body: [],
       color: "red",
-      speed: 0.4,
+      speed: 0.04,
       angle: 20.0
     }
   end
 
   def change_direction(%__MODULE__{} = snake, angle) do
     %{snake | angle: angle}
-  end
-
-  def heads_touching(%__MODULE__{head: h1, body: b1}, %__MODULE__{head: h2, body: b2}) do
-    if distance(h1, h2) < h1.r + h2.r do
-      :head
-    else
-      case Enum.find(b2, fn seg -> distance(h1, seg) < h1.r + seg.r end) do
-        nil -> nil
-        seg -> :body
-      end
-    end
   end
 
   defp distance(%{x: x1, y: y1}, %{x: x2, y: y2}) do
@@ -39,7 +28,7 @@ defmodule Snake.Game.Snake do
         y: head.y + :math.sin(angle) * snake.speed * delta_t
     }
 
-    spacing = 5
+    spacing = 2
 
     new_body =
       for {prev_seg, seg} <- Enum.zip([head | body], body) do
@@ -57,7 +46,13 @@ defmodule Snake.Game.Snake do
 
   def grow(%__MODULE__{head: oldhead} = snake) do
     snake = snake |> move
-    %{snake | body: [oldhead | snake.body], speed: snake.speed + 0.01}
+    accel = 1 * length(snake.body) / 100_000
+
+    %{
+      snake
+      | body: [oldhead | snake.body],
+        speed: snake.speed + accel
+    }
   end
 
   def die(%_MODULE__{head: head, body: body}) do

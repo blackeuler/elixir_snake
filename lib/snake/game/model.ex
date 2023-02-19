@@ -4,7 +4,7 @@ defmodule Snake.Game.Model do
   alias Snake.Game.{Food, Snake}
 
   def new() do
-    %__MODULE__{current_player: 1, snakes: [], food: []}
+    %__MODULE__{current_player: nil, snakes: [], food: []}
   end
 
   def add_snake(%__MODULE__{} = m, snake) do
@@ -27,21 +27,17 @@ defmodule Snake.Game.Model do
     end)
   end
 
-  def update(%__MODULE__{current_player: nil} = m) do
-    m
-  end
-
-  def update(%__MODULE__{} = m) do
+  def update(%__MODULE__{} = m, delta_t) do
     m
     |> handle_collisions()
-    |> move_snakes()
+    |> move_snakes(delta_t)
   end
 
-  def move_snakes(%__MODULE__{snakes: snakes} = m) do
-    %{m | snakes: Enum.map(snakes, &Snake.move/1)}
+  def move_snakes(%__MODULE__{snakes: snakes} = m, delta_t) do
+    %{m | snakes: Enum.map(snakes, fn s -> Snake.move(s, delta_t) end)}
   end
 
-  def handle_collisions(%__MODULE__{snakes: snakes, food: food, current_player: cp} = m) do
+  def handle_collisions(%__MODULE__{height: height, width: width,snakes: snakes, food: food, current_player: cp} = m) do
     {eaten_food, remaining_food} =
       Enum.split_with(food, fn f ->
         Enum.any?(snakes, fn s -> collides(s, f) end)
@@ -59,8 +55,8 @@ defmodule Snake.Game.Model do
     {dead_snakes, alive_snakes} =
       Enum.split_with(new_snakes, fn s ->
         Enum.any?(new_snakes, fn other ->
-          s != other &&
-            collides(s, other)
+          (s != other &&
+             collides(s, other)) || s.head.x > width || s.head.y > height
         end)
       end)
 
@@ -69,7 +65,6 @@ defmodule Snake.Game.Model do
 
     %{m | snakes: alive_snakes, food: new_food}
   end
-
 
   defp collides(%Snake{head: head}, %Snake{head: other_head, body: other_body}) do
     distance(head, other_head) < head.r + other_head.r ||
@@ -84,7 +79,7 @@ defmodule Snake.Game.Model do
     %{m | snakes: Enum.map(snakes, &Snake.move/1)}
   end
 
-  def update_snake_angle(%__MODULE__{snakes: snakes} = m, snake_id, {x, y}) do
+  def update_snake_angle(%__MODULE__{snakes: snakes, current_player: snake_id} = m, {x, y}) do
     %{
       m
       | snakes:
