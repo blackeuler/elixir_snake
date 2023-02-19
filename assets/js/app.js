@@ -49,13 +49,16 @@ let Hooks = {}
 //             const widthInBlocks = canvasWidth / blockSize;
 //             const heightInBlocks = canvasHeight / blockSize;
 //             console.log(snakes)
-
+             const svg = this.el
+             let pt = svg.createSVGPoint();
+            function cursorPoint(evt) {
+                pt.x = evt.clientX;
+                pt.y = evt.clientY;
+                return pt.matrixTransform(svg.getScreenCTM().inverse());
+            }
             this.el.addEventListener('mousemove', e => {
-             const x = e.clientX
-             const y = e.clientY
-                // const angle = Math.atan2(dy,dx);
-                // console.log(angle)
-                this.pushEvent("angle_change", {x,y });
+                const pt =  cursorPoint(e);
+                this.pushEvent("angle_change", {x: pt.x, y: pt.y });
             });
 //             // canvas.addEventListener('mousemove', function(event) {
 //             // // Calculate the angle between the mouse position and the snake's head position
