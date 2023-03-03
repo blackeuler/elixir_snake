@@ -1,14 +1,14 @@
 defmodule Snake.Game.Model do
-  defstruct [:current_player, :snakes, :food, width: 800, height: 800]
+  defstruct [:snakes, :food, width: 1800, height: 1800]
 
   alias Snake.Game.{Food, Snake}
 
   def new() do
-    %__MODULE__{current_player: nil, snakes: [], food: []}
+    %__MODULE__{snakes: [], food: []}
   end
 
   def add_snake(%__MODULE__{} = m, snake) do
-    %{m | snakes: [snake | m.snakes], current_player: snake.id}
+    %{m | snakes: [snake | m.snakes]}
   end
 
   def add_food(%__MODULE__{width: width, height: height} = m) do
@@ -21,8 +21,8 @@ defmodule Snake.Game.Model do
     end)
   end
 
-  def snake_of_length(n) do
-    Enum.reduce(1..n, Snake.new({90, 30}, 1), fn _, acc ->
+  def snake_of_length(n, user_name) do
+    Enum.reduce(1..n, Snake.new({90, 30}, user_name), fn _, acc ->
       Snake.grow(acc)
     end)
   end
@@ -37,7 +37,7 @@ defmodule Snake.Game.Model do
     %{m | snakes: Enum.map(snakes, fn s -> Snake.move(s, delta_t) end)}
   end
 
-  def handle_collisions(%__MODULE__{height: height, width: width,snakes: snakes, food: food, current_player: cp} = m) do
+  def handle_collisions(%__MODULE__{height: height, width: width, snakes: snakes, food: food} = m) do
     {eaten_food, remaining_food} =
       Enum.split_with(food, fn f ->
         Enum.any?(snakes, fn s -> collides(s, f) end)
@@ -79,12 +79,12 @@ defmodule Snake.Game.Model do
     %{m | snakes: Enum.map(snakes, &Snake.move/1)}
   end
 
-  def update_snake_angle(%__MODULE__{snakes: snakes, current_player: snake_id} = m, {x, y}) do
+  def update_snake_angle(%__MODULE__{snakes: snakes} = m, {x, y}, current_player) do
     %{
       m
       | snakes:
           Enum.map(snakes, fn snake ->
-            if snake.id == snake_id do
+            if snake.id == current_player.id do
               dx = x - snake.head.x
               dy = y - snake.head.y
               angle = :math.atan2(dy, dx)
@@ -102,14 +102,14 @@ defmodule Snake.Game.Model do
     :math.sqrt(dx * dx + dy * dy)
   end
 
-  def current_player(%__MODULE__{current_player: snake_id}) do
-    snake_id
-  end
+  def to_svg_box(%__MODULE__{width: w, height: h, snakes: snakes}, snake) do
+    snake = Enum.find(snakes, &(&1.id == snake.id))
+    # Define a zoom level (in this case, 2x)
+    zoom = 20
 
-  def to_svg_box(%__MODULE__{width: w, height: h, snakes: snakes, current_player: snake_id}) do
-    snake = Enum.find(snakes, &(&1.id == snake_id))
+    # Calculate the x and y offsets based on the player's position and the desired zoom level
     x_offset = snake.head.x - w / 2
     y_offset = snake.head.y - h / 2
-    "#{x_offset} #{y_offset} #{w} #{h}"
+    "#{x_offset} #{y_offset} #{w - zoom} #{h - zoom}"
   end
 end

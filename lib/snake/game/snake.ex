@@ -1,11 +1,12 @@
 defmodule Snake.Game.Snake do
   @derive {Jason.Encoder, only: [:head, :body, :color]}
-  defstruct [:id, :head, :body, :angle, :speed, :color]
+  defstruct [:id, :user_name, :head, :body, :angle, :speed, :color]
 
-  def new({x, y}, id) do
+  def new({x, y}, user_name \\ "computer") do
     %__MODULE__{
       head: %{x: x, y: y, r: 10},
-      id: id,
+      user_name: user_name,
+      id: Ecto.UUID.generate(),
       body: [],
       color: "red",
       speed: 0.04,
