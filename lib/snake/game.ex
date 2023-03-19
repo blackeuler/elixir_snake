@@ -1,6 +1,10 @@
 defmodule Snake.Game do
   alias Snake.Game.{Snake, Model, Player}
 
+  def new() do
+    Model.new()
+  end
+
   def start() do
     Model.new()
     |> Model.add_food()
@@ -19,7 +23,7 @@ defmodule Snake.Game do
     snakes
   end
 
-  def add_snake(%Model{} = m, snake) do
+  def add_snake(%Model{snakes: snakes} = m, snake) do
     Model.add_snake(m, snake)
   end
 
@@ -44,8 +48,8 @@ defmodule Snake.Game do
     Model.update(game, delta_t)
   end
 
-  def to_svg_box(%Model{} = game, snake) do
-    Model.to_svg_box(game, snake)
+  def to_svg_box(%Model{} = game, snake, width, height) do
+    Model.to_svg_box(game, snake, width, height)
   end
 
   def background(%Model{width: width, height: height} = game) do

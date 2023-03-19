@@ -15,7 +15,11 @@ defmodule Snake.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Snake.PubSub},
       # Start the Endpoint (http/https)
-      SnakeWeb.Endpoint
+      SnakeWeb.Endpoint,
+      %{
+        id: GameServer,
+        start: {Snake.Game.Server, :start_link, [[]]}
+      }
       # Start a worker by calling: Snake.Worker.start_link(arg)
       # {Snake.Worker, arg}
     ]

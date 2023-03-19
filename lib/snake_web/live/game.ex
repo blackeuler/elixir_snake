@@ -1,16 +1,35 @@
 defmodule SnakeWeb.GameLive do
   use SnakeWeb, :live_view
 
+  @tick_rate 30
+
+  alias Snake.Game.Server
   alias Snake.Game
 
+            #<rect width={@game_model.width} height={@game_model.height} x={0 } y={0 } fill="black" />
   def render(assigns) do
     ~H"""
-    <%= if @current_player do %>
-    <h1> Current Player: <%= @current_player.user_name %> </h1>
-    <div  data-block="4"  >
-      <svg  phx-hook="move" id="game" viewBox={Game.to_svg_box(@game_model,@current_player)} xmlns="http://www.w3.org/2000/svg">
+    <%= if not is_nil(@current_player) and not is_nil(@game_model) do %>
+    <script>
+      // Add this script to send browser window dimensions to the server
+      window.addEventListener('resize', () => {
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        window.Phoenix.LiveView.pushEvent(window, 'send_dimensions', {width, height});
+      });
+    </script>
+
+      <svg   phx-hook="move" id="game"
+      viewBox={Game.to_svg_box(@game_model,@current_player,@window_width,@window_height)}
+      xmlns="http://www.w3.org/2000/svg">
+      <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="gray" stroke-width="0.5"/>
+    </pattern>
+    </defs>
+    <rect x="0" y="0" width="100%" height="100%" fill="#2d2d2d" />
+    <rect x="25" y="25" width={@game_model.width} height={@game_model.height} fill="url(#grid)" />
             <!-- Simple rectangle -->
-            <rect width={@game_model.width} height={@game_model.height} x={0 } y={0 } fill="black" />
             <%= for snake <- @game_snakes do %>
                 <.snakec snake={snake} />
             <% end %>
@@ -18,8 +37,6 @@ defmodule SnakeWeb.GameLive do
                 <.foodc food={food} />
             <% end %>
        </svg>
-    </div>
-    <button phx-click="start"> Start Playing </button>
     <% else %>
     <.form :let={f} for={@player_changeset}  phx-submit="save">
     <%= label f, :name %>
@@ -36,17 +53,32 @@ defmodule SnakeWeb.GameLive do
   def mount(_session, _params, socket) do
     {:ok,
      socket
+     |> assign_window_dimensions()
      |> assign_game_model()
      |> assign_snakes
-     |> assign_player_changeset()}
+     |> assign_player_changeset()
+     |> assign_players()}
   end
 
   def assign_game_model(socket) do
-    assign(socket, game_model: Game.start())
+    assign(socket, game_model: nil)
+  end
+
+  def assign_window_dimensions(socket) do
+    assign(socket, window_height: 800)
+    |> assign(window_width: 800)
+  end
+
+  def assign_snakes(%{assigns: %{game_model: nil}} = socket) do
+    socket
   end
 
   def assign_snakes(%{assigns: %{game_model: game_model}} = socket) do
     assign(socket, game_snakes: Game.all_snakes(game_model))
+  end
+
+  def assign_players(socket) do
+    assign(socket, players: [])
   end
 
   def assign_player_changeset(socket) do
@@ -54,40 +86,61 @@ defmodule SnakeWeb.GameLive do
     |> assign(current_player: nil)
   end
 
-  def handle_event("start", _params, %{assigns: %{game_model: gm}} = socket) do
-    Process.send_after(self(), :update, 10)
-    {:noreply, assign(socket, game_model: Game.update(gm, 10))}
+  def handle_event(
+        "window_size",
+        %{"width" => x, "height" => y},
+        socket
+      ) do
+    {:noreply, assign(socket, window_height: y) |> assign(window_width: x)}
   end
 
   def handle_event(
         "angle_change",
         %{"x" => x, "y" => y},
-        %{assigns: %{game_model: gm, current_player: cp}} = socket
+        %{assigns: %{current_player: cp}} = socket
       ) do
-    {:noreply,
-     assign(socket,
-       game_model: Game.change_snake_angle(gm, {x, y}, cp)
-     )}
+    Server.change_snake_angle(GameServer, cp, {x, y})
+
+    {:noreply, socket}
   end
 
   def handle_event(
         "save",
         %{"player" => %{"name" => name}},
-        %{assigns: %{game_model: gm}} = socket
+        socket
       ) do
-    snake = Game.new_snake_of_length(12, name)
+    {cp, gm} = Server.join(GameServer, name)
+
+    schedule_update()
 
     {:noreply,
      socket
-     |> assign(:game_model, Game.add_snake(gm, snake))
-     |> assign(:current_player, snake)}
+     |> assign(:game_model, gm)
+     |> assign_snakes()
+     |> assign(:current_player, cp)}
+  end
+
+  def handle_info(%{event: "update"}, %{assigns: %{game_model: gm}} = socket) do
+    {:noreply, assign(socket, game_model: Game.update(gm, 10))}
+  end
+
+  def handle_info(%{event: "player_joined", payload: %{new_player: snake}}, socket) do
+    {:noreply,
+     socket
+     |> assign(:game_model, Game.add_snake(socket.assigns.game_model, snake))
+     |> assign(:players, [snake | socket.assigns.players])}
+  end
+
+  defp schedule_update() do
+    # In 30 seconds
+    Process.send_after(self(), :update, @tick_rate)
   end
 
   def handle_info(:update, socket) do
-    Process.send_after(self(), :update, 15)
+    schedule_update()
 
     {:noreply,
-     assign(socket, game_model: Game.update(socket.assigns.game_model, 15))
+     assign(socket, game_model: Server.get_game_state(GameServer))
      |> assign_snakes}
   end
 

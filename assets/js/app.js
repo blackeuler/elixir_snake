@@ -29,10 +29,61 @@ import topbar from "../vendor/topbar"
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 //Snake Hook Stuff
 let Hooks = {}
+Hooks.WindowSize = {
+  mounted() {
+    // Get initial window size
+    let width = window.innerWidth;
+    let height = window.innerHeight;
 
+    // Send it to the server
+    this.pushEvent("send_dimensions", {width: width, height: height});
+
+    // Define a resize handler
+    let resizeHandler = () => {
+      // Get current window size
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      // Send it to the server
+      this.pushEvent("send_dimensions", {width: width, height: height});
+    };
+
+    // Add resize listener
+    window.addEventListener("resize", resizeHandler);
+
+    // Store resize handler for later removal
+    this.resizeHandler = resizeHandler;
+  },
+
+  destroyed() {
+    // Remove resize listener
+    window.removeEventListener("resize", this.resizeHandler);
+  }
+}
     Hooks.move =  {
         mounted() {
 
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    // Send it to the server
+    this.pushEvent("window_size", {width: width, height: height});
+
+    // Define a resize handler
+    let resizeHandler = () => {
+      // Get current window size
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      // Send it to the server
+      this.pushEvent("window_size", {width: width, height: height});
+    };
+
+    // Add resize listener
+    window.addEventListener("resize", resizeHandler);
+
+    // Store resize handler for later removal
+    this.resizeHandler = resizeHandler;
 //             let canvas = this.el.firstElementChild;
             // const snakes = JSON.parse(this.el.dataset.snakes)
 //             const blockSize = JSON.parse(this.el.dataset.block) || 10

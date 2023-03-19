@@ -1,5 +1,5 @@
 defmodule Snake.Game.Model do
-  defstruct [:snakes, :food, width: 1800, height: 1800]
+  defstruct [:snakes, :food, width: 3800, height: 3800]
 
   alias Snake.Game.{Food, Snake}
 
@@ -8,7 +8,11 @@ defmodule Snake.Game.Model do
   end
 
   def add_snake(%__MODULE__{} = m, snake) do
-    %{m | snakes: [snake | m.snakes]}
+    if snake in m.snakes do
+      m
+    else
+      %{m | snakes: [snake | m.snakes]}
+    end
   end
 
   def add_food(%__MODULE__{width: width, height: height} = m) do
@@ -22,7 +26,7 @@ defmodule Snake.Game.Model do
   end
 
   def snake_of_length(n, user_name) do
-    Enum.reduce(1..n, Snake.new({90, 30}, user_name), fn _, acc ->
+    Enum.reduce(1..n, Snake.new({:rand.uniform(3000), :rand.uniform(3000)}, user_name), fn _, acc ->
       Snake.grow(acc)
     end)
   end
@@ -79,7 +83,7 @@ defmodule Snake.Game.Model do
     %{m | snakes: Enum.map(snakes, &Snake.move/1)}
   end
 
-  def update_snake_angle(%__MODULE__{snakes: snakes} = m, {x, y}, current_player) do
+  def update_snake_angle(%__MODULE__{snakes: snakes} = m, current_player, {x, y}) do
     %{
       m
       | snakes:
@@ -102,14 +106,41 @@ defmodule Snake.Game.Model do
     :math.sqrt(dx * dx + dy * dy)
   end
 
-  def to_svg_box(%__MODULE__{width: w, height: h, snakes: snakes}, snake) do
+  def to_svg_box(%__MODULE__{width: w, height: h, snakes: snakes}, snake, _width, _height) do
     snake = Enum.find(snakes, &(&1.id == snake.id))
     # Define a zoom level (in this case, 2x)
-    zoom = 20
+    zoom = 200
 
     # Calculate the x and y offsets based on the player's position and the desired zoom level
     x_offset = snake.head.x - w / 2
     y_offset = snake.head.y - h / 2
     "#{x_offset} #{y_offset} #{w - zoom} #{h - zoom}"
   end
+
+  # def to_svg_box(
+  #       %__MODULE__{width: w, height: h, snakes: snakes},
+  #       snake,
+  #       window_width,
+  #       window_height
+  #     ) do
+  #   snake = Enum.find(snakes, &(&1.id == snake.id))
+
+  #   # Define the zoom factor; increase this value to zoom in more
+  #   zoom_factor = 7
+
+  #   # Calculate the zoom level based on the browser window dimensions and game dimensions
+  #   zoom_x = window_width / w * zoom_factor
+  #   zoom_y = window_height / h * zoom_factor
+  #   zoom = min(zoom_x, zoom_y)
+
+  #   # Calculate the x and y offsets based on the player's position and the desired zoom level
+  #   x_offset = max(snake.head.x * zoom - window_width / 2, 0)
+  #   y_offset = max(snake.head.y * zoom - window_height / 2, 0)
+  #   # Clamp the x and y offsets to keep the game area within the screen
+  #   x_offset = min(max(x_offset, 0), w * zoom - window_width)
+  #   y_offset = min(max(y_offset, 0), h * zoom - window_height)
+  #   #"#{x_offset} #{y_offset} #{window_width} #{window_height}"
+  #   # "#{x_offset} #{y_offset} #{w} #{h}"
+  #   "#{snake.head.x - w/2} #{snake.head.y - h/2} #{w} #{h}"
+  # end
 end
